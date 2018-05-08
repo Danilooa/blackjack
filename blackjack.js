@@ -1,7 +1,8 @@
 let textArea = document.getElementById("text-area"),
     newGameButton = document.getElementById("new-game-button"),
     hitButton = document.getElementById("hit-button"),
-    stayButton = document.getElementById("stay-button");
+    stayButton = document.getElementById("stay-button"),
+    result = document.getElementById("result");
 
 let gameStarted = false,
     gameOver = false,
@@ -72,14 +73,29 @@ function getNextCard() {
 function showStatus() {
   let dealerDisplay = document.getElementById('dealer-display');
   let playerDisplay = document.getElementById('player-display');
+  
   if (!gameStarted) {
     textArea.innerText = "Welcome to blackjack!!!";
-    dealerDisplay.innerHtml = '';
-    playerDisplay.innerHtml = '';
-  } else {
-    dealerDisplay.innerHtml = getHtmlScore('Dealer', dealerCards);
-    playerDisplay.innerHtml = getHtmlScore('Player', playerCards);
   }
+
+  dealerDisplay.innerHTML = getHtmlCards('Dealer', dealerCards);
+  playerDisplay.innerHTML = getHtmlCards('Player', playerCards);
+
+  dealerDisplay.innerHTML += '<br/>(Score: ' + dealerScore + ")";
+  playerDisplay.innerHTML += '<br/>(Score: ' + playerScore + ")";
+
+  if (gameOver) {
+    if (playerWon) {
+      result.innerText += "YOU WIN!";
+    }
+    else {
+      result.innerText += "DEALER WINS";
+    }
+    newGameButton.style.display = 'inline';
+    hitButton.style.display = 'none';
+    stayButton.style.display = 'none';
+  }
+
 }
 
 function shuffleDeck(deckToShuffle) {
@@ -94,11 +110,12 @@ function shuffleDeck(deckToShuffle) {
 
 newGameButton.addEventListener('click', function() {
   gameStarted = true;
+  gameOver = false;
+  playerWon = false;
 
   deck = createDeck();
   shuffleDeck(deck);
 
-  console.log(deck);
 
   dealerCards = [ getNextCard(), getNextCard() ];
   playerCards = [ getNextCard(), getNextCard() ];
@@ -106,19 +123,77 @@ newGameButton.addEventListener('click', function() {
   newGameButton.style.display = 'none';
   hitButton.style.display = 'inline';
   stayButton.style.display = 'inline';
+  result.innerHTML = '';
 
+  checkForEndOfGame();
+
+  updateScores();
   showStatus();
 });
 
-function getCardFullName(card) {
-  return card.value + " of " + card.suit;
+hitButton.addEventListener('click', function() {
+  playerCards.push(getNextCard());
+  checkForEndOfGame();
+  showStatus();
+});
+
+stayButton.addEventListener('click', function() {
+  gameOver = true;
+  checkForEndOfGame();
+  showStatus();
+});
+
+function getCardUrl(card) {
+  return card.value.value.toLowerCase() + "_of_" + card.suit.toLowerCase();
 }
 
-function getHtmlScore(playerName, cards) {
-  let htmlScore = playerName + ' has: <br/><br/>';
+function getCardFullName(card) {
+  return card.value.value + " of " + card.suit;
+}
+
+function getHtmlCards(playerName, cards) {
+  let htmlScore = '<br/>' + playerName + ' has: <br/>';
   for (let cardIdx = 0; cardIdx < cards.length; cardIdx++) {
-    htmlScore =+ getCardFullName(cards[cardIdx]) + '<br/>';
+    htmlScore += '<img title="' + getCardFullName(cards[cardIdx]) + '" src="cards/' + getCardUrl(cards[cardIdx]) + '.png" style="padding: 3px" />';
   }
-  htmlScore += '<br/> Score: ' + getScore(cards);
   return htmlScore;
+}
+
+function updateScores() {
+  dealerScore = getScore(dealerCards);
+  playerScore = getScore(playerCards);
+}
+
+
+function checkForEndOfGame() {
+  
+  updateScores();
+  
+  if (gameOver) {
+
+    while(dealerScore < playerScore 
+          && playerScore <= 21 
+          && dealerScore <= 21) {
+      dealerCards.push(getNextCard());
+      updateScores();
+    }
+  }
+  
+  if (playerScore > 21) {
+    playerWon = false;
+    gameOver = true;
+  }
+  else if (dealerScore > 21) {
+    playerWon = true;
+    gameOver = true;
+  }
+  else if (gameOver) {
+    
+    if (playerScore > dealerScore) {
+      playerWon = true;
+    }
+    else {
+      playerWon = false;
+    }
+  }
 }
