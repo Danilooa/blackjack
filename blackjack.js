@@ -1,3 +1,17 @@
+let textArea = document.getElementById("text-area"),
+    newGameButton = document.getElementById("new-game-button"),
+    hitButton = document.getElementById("hit-button"),
+    stayButton = document.getElementById("stay-button");
+
+let gameStarted = false,
+    gameOver = false,
+    playerWon = false,
+    dealerCards = [],
+    playerCards = [],
+    dealerScore = 0,
+    playerScore = 0,
+    deck = [];
+
 let suits = [
   'Hearts',
   'Clubs',
@@ -21,6 +35,20 @@ let values = [
   { value: 'Two', points: [2]}
 ];
 
+function getScore(cards) {
+  let score = 0;
+  for (let cardIdx = 0; cardIdx < cards.length; cardIdx++) {
+    let card = cards[cardIdx];
+    let isAce = card.value.points.length === 2;
+    let calculatedScorePlusEleven = card.value.points[1] + score;
+    if (isAce &&  calculatedScorePlusEleven <= 21) {
+      score += card.value.points[1];
+      continue;
+    }
+    score += card.value.points[0];
+  }
+  return score;
+}
 
 function createDeck() {
   let deck = [];
@@ -37,27 +65,20 @@ function createDeck() {
   return deck;
 }
 
-let textArea = document.getElementById("text-area"),
-    newGameButton = document.getElementById("new-game-button"),
-    hitButton = document.getElementById("hit-button"),
-    stayButton = document.getElementById("stay-button");
-
-let gameStarted = false,
-    gameOver = false,
-    playerWon = false,
-    dealerCards = [],
-    playerCards = [],
-    dealerScore = 0,
-    playerScore = 0,
-    deck = [];
-
 function getNextCard() {
   return deck.shift();
 }
 
 function showStatus() {
+  let dealerDisplay = document.getElementById('dealer-display');
+  let playerDisplay = document.getElementById('player-display');
   if (!gameStarted) {
     textArea.innerText = "Welcome to blackjack!!!";
+    dealerDisplay.innerHtml = '';
+    playerDisplay.innerHtml = '';
+  } else {
+    dealerDisplay.innerHtml = getHtmlScore('Dealer', dealerCards);
+    playerDisplay.innerHtml = getHtmlScore('Player', playerCards);
   }
 }
 
@@ -88,3 +109,16 @@ newGameButton.addEventListener('click', function() {
 
   showStatus();
 });
+
+function getCardFullName(card) {
+  return card.value + " of " + card.suit;
+}
+
+function getHtmlScore(playerName, cards) {
+  let htmlScore = playerName + ' has: <br/><br/>';
+  for (let cardIdx = 0; cardIdx < cards.length; cardIdx++) {
+    htmlScore =+ getCardFullName(cards[cardIdx]) + '<br/>';
+  }
+  htmlScore += '<br/> Score: ' + getScore(cards);
+  return htmlScore;
+}
